@@ -14,4 +14,8 @@ app.get('/', function(req, res) {
     res.render('landing');
 });
 
+app.get('/demo', function(req, res) {
+    res.render('demo');
+});
+
 app.listen(3000);
