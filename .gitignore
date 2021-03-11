@@ -1,11 +1,13 @@
 *.csv
 
+!data/indicator_tweets.csv
+
+!data/reduced_sentiment140_data.csv
+
 .DS_Store
 
+
 model/.*
-
-sentiment140/*
-
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
