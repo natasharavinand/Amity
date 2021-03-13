@@ -1,13 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-    {% block head %}{% endblock %}
-</head>
-<body>
-    {% block body %}{% endblock %}
-</body>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<link href="{{ url_for('static',filename='css/normalize.css') }}" rel="stylesheet">
+		<link href="{{ url_for('static',filename='css/login.css') }}" rel="stylesheet">
+		<link href="{{ url_for('static',filename='css/main.css') }}" rel="stylesheet">
+		<script src="{{ url_for('static',filename='js/js_cookie_min.js') }}"></script>
+		<script
+			  src="{{ url_for('static',filename='js/jquery_min.js') }}"
+			  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+			  crossorigin="anonymous"></script>
+        {% block head %}{% endblock %}
+	</head>
+	<body class="segoe">
+		{% block body %}{% endblock %}
+	</body>
 </html>
