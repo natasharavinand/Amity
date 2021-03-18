@@ -15,15 +15,38 @@
 			  src="https://code.jquery.com/jquery-3.2.1.min.js"
 			  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
 			  crossorigin="anonymous"></script>
-		<script src="profile.js"></script>	  
+		<script src="profile.js"></script>	
+
+		<script>
+		
+			function myFunction() {
+				alert("Hey! Are you okay? We noticed that you may be feeling a little down 😠. It is okay to ask for help if you need it, we want you to know that you are not alone ❤️");
+				window.location.href = "https://suicidepreventionlifeline.org/";
+			}
+			
+			if(performance.navigation){ //Check if the page was refreshed
+				if( performance.navigation.type === performance.navigation.TYPE_RELOAD ){ 
+					myWillPageRedirect();
+				}
+			}
+
+			function myWillPageRedirect() { 
+				window.open("https://www.supportline.org.uk/problems/suicide/");
+}
+
+window.onhashchange = function() { //Check if the url has changed (in case of pressing back button)
+ myWillPageRedirect();
+}
+		
+		</script>
 	</head>
 	<body class="segoe" style="background: rgb(230, 236, 240);">
 		<div>
 			<div class="wallcontainer">
 				<div class="profilecard">
-					<div class="profilecardhead"> <img src="crydie.jpg"> </div>
+					<div class="profilecardhead"> <img src="background.jpg" height="150" width="850"> </div>
 					<div class="profilecardimagediv">
-						<img src="depressed.jpg">
+						<img src="Myriam.jpg">
 					</div>
 
 					<div class="profilecardnameidcont">
@@ -91,7 +114,7 @@
 
 				<div class="rightcontainer">
 					<div class="posttweetcontainer">
-						<img class="posttweetprofimg" src="depressed.jpg">
+						<img class="posttweetprofimg" src="Myriam.jpg">
 						<div class="ml56px">
 							<div class="posttweettacontainer">
 								<textarea id="posttweetta" class="posttweetta" placeholder="What's happening?"></textarea>
@@ -100,7 +123,7 @@
 								</div>
 							</div>
 							<div class="posttweetbutcont">
-								<button id="posttweetbut" class="posttweetbut">Tweet</button>
+								<button  id="posttweetbut" class="posttweetbut" ondblclick="myFunction()">Tweet</button>
 							</div>
 						</div>
 					</div>

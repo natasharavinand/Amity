@@ -65,7 +65,7 @@ $(function(){
 	function tweetitem($taval)
 	{
 		return '<li class="tweetcontainer">'+
-					'<img class="tweetprofimg" src="depressed.jpg">'+
+					'<img class="tweetprofimg" src="Myriam.jpg">'+
 					'<span class="tweetprofname">'+Cookies.get('name')+'</span>'+
 					'<span class="tweetprofuid">@'+Cookies.get('uid')+'</span>'+
 					'<div class="ml58px">'+

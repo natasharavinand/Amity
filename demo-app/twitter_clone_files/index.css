@@ -70,7 +70,7 @@ body.segoe {
 }
 
 .profilecardhead{
-	background-color:blue;height:110px;width:100%; object-fit:cover
+	background-color:blue;height:150px;width:100%; object-fit:cover
 }
 
 .profilecardimagediv{
@@ -78,11 +78,11 @@ body.segoe {
 }
 
 .profilecardimagediv img{
-	width:150px;height:150px;border-radius:50%;box-sizing:border-box;border:2px solid #FFF;
+	width:160px;height:190px;border-radius:50%;box-sizing:border-box;border:2px solid #FFF;
 }
 
 .profilecardnameidcont{
-	position:absolute;top:120px;left:170px;width:185px;
+	position:absolute;top:160px;left:180px;width:285px;
 }
 
 .profilecardnamecont{
