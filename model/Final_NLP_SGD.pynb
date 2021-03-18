@@ -1,0 +1,405 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "name": "NLP_SGD.ipynb",
+      "provenance": [],
+      "collapsed_sections": [],
+      "toc_visible": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "accelerator": "GPU"
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "im-9xu5vP-pj"
+      },
+      "source": [
+        "## Import Libraries"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "XXLhBazkBFmX",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "9be08e6a-c9e5-4ee2-85b4-39f954b3d766"
+      },
+      "source": [
+        "\"\"\"\n",
+        "Code borrowed from: https://github.com/AminuIsrael/Predicting-Suicide-Ideation\n",
+        "Article link: https://towardsdatascience.com/building-a-suicidal-tweet-classifier-using-nlp-ff6ccd77e971\n",
+        "\"\"\"\n",
+        "\n",
+        "import pickle\n",
+        "import re\n",
+        "import numpy as np\n",
+        "import pandas as pd\n",
+        "from tqdm import tqdm\n",
+        "import nltk\n",
+        "nltk.download('stopwords')\n",
+        "\n",
+        "import torch\n",
+        "\n",
+        "device = torch.device('cuda')"
+      ],
+      "execution_count": 2,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "[nltk_data] Downloading package stopwords to /root/nltk_data...\n",
+            "[nltk_data]   Package stopwords is already up-to-date!\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "SjdJ-yDqQLAF"
+      },
+      "source": [
+        "## Data Preprocessing"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "W72JUUFRQM03"
+      },
+      "source": [
+        "def preprocess_tweet(text):\n",
+        "    text = re.sub('<[^>]*>', '', text)\n",
+        "    emoticons = re.findall('(?::|;|=)(?:-)?(?:\\)|\\(|D|P)', text)\n",
+        "    text = re.sub('[\\W]+', ' ', text.lower())\n",
+        "    text = text+' '.join(emoticons).replace('-', '') \n",
+        "    return text"
+      ],
+      "execution_count": 3,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "KXdkvDwGgOuc",
+        "outputId": "aad7bd86-340d-4f54-cd7d-4966ab0feb0c"
+      },
+      "source": [
+        "tqdm.pandas()\r\n",
+        "df = pd.read_csv('https://raw.githubusercontent.com/natasharavinand/Amity/main/data/model_inputs/all_data.csv')\r\n",
+        "df['tweet'] = df['tweet'].progress_apply(preprocess_tweet)"
+      ],
+      "execution_count": 4,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "/usr/local/lib/python3.7/dist-packages/tqdm/std.py:658: FutureWarning: The Panel class is removed from pandas. Accessing it from the top-level namespace will also be removed in the next version\n",
+            "  from pandas import Panel\n",
+            "100%|██████████| 20446/20446 [00:00<00:00, 132248.20it/s]\n"
+          ],
+          "name": "stderr"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "zvVphdaaQyVe"
+      },
+      "source": [
+        "from nltk.stem.porter import PorterStemmer\n",
+        "porter = PorterStemmer()\n",
+        "def tokenizer_porter(text):\n",
+        "    return [porter.stem(word) for word in text.split()]"
+      ],
+      "execution_count": 5,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "vYsFrM5pgkr_"
+      },
+      "source": [
+        "from nltk.corpus import stopwords\r\n",
+        "stop = stopwords.words('english')"
+      ],
+      "execution_count": 6,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "qP3lMP4zgpth",
+        "outputId": "13b655c8-7f97-46a8-86cd-f36bfd4d5599"
+      },
+      "source": [
+        "[w for w in tokenizer_porter('a runner likes running and runs a lot') if w not in stop]"
+      ],
+      "execution_count": 7,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "['runner', 'like', 'run', 'run', 'lot']"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 7
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "zjsn1dVsgx82"
+      },
+      "source": [
+        "def tokenizer(text):\r\n",
+        "    text = re.sub('<[^>]*>', '', text)\r\n",
+        "    emoticons = re.findall('(?::|;|=)(?:-)?(?:\\(|D|P)',text.lower())\r\n",
+        "    text = re.sub('[\\W]+', ' ', text.lower())\r\n",
+        "    text += ' '.join(emoticons).replace('-', '')\r\n",
+        "    tokenized = [w for w in tokenizer_porter(text) if w not in stop]\r\n",
+        "    return tokenized"
+      ],
+      "execution_count": 8,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "E8tQRZFza19U"
+      },
+      "source": [
+        "# Using the Hashing Vectorizer"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "c4plFrNfbKV9"
+      },
+      "source": [
+        "from sklearn.feature_extraction.text import HashingVectorizer\r\n",
+        "vect = HashingVectorizer(decode_error='ignore', n_features=2**21, \r\n",
+        "                         preprocessor=None,tokenizer=tokenizer)"
+      ],
+      "execution_count": 9,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "fOarKcDaIjmS"
+      },
+      "source": [
+        "# Building the Model"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "rUCBOvTRSk_e"
+      },
+      "source": [
+        "from sklearn.linear_model import SGDClassifier\n",
+        "clf = SGDClassifier(loss='log', random_state=1)"
+      ],
+      "execution_count": 10,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "NMAlc3wThB7G"
+      },
+      "source": [
+        "X = df[\"tweet\"].to_list()\r\n",
+        "y = df['at_risk']"
+      ],
+      "execution_count": 11,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "JKRc398rhRwk"
+      },
+      "source": [
+        "from sklearn.model_selection import train_test_split\r\n",
+        "X_train,X_test,y_train,y_test = train_test_split(X,\r\n",
+        "                                                 y,\r\n",
+        "                                                 test_size=0.20,\r\n",
+        "                                                 random_state=0)"
+      ],
+      "execution_count": 12,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "6T3c0IqchW0c"
+      },
+      "source": [
+        "X_train = vect.transform(X_train)\r\n",
+        "X_test = vect.transform(X_test)"
+      ],
+      "execution_count": 13,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "zvbGjWzJheJe",
+        "outputId": "fee4cf29-eaa6-477a-85c0-99118de4a970"
+      },
+      "source": [
+        "classes = np.array([0, 1])\r\n",
+        "clf.partial_fit(X_train, y_train,classes=classes)"
+      ],
+      "execution_count": 14,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "SGDClassifier(alpha=0.0001, average=False, class_weight=None,\n",
+              "              early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,\n",
+              "              l1_ratio=0.15, learning_rate='optimal', loss='log', max_iter=1000,\n",
+              "              n_iter_no_change=5, n_jobs=None, penalty='l2', power_t=0.5,\n",
+              "              random_state=1, shuffle=True, tol=0.001, validation_fraction=0.1,\n",
+              "              verbose=0, warm_start=False)"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 14
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "uViR_qAihig1",
+        "outputId": "0236010a-c730-4b6b-d311-6d7dbdb4766c"
+      },
+      "source": [
+        "print('Accuracy: %.3f' % clf.score(X_test, y_test))"
+      ],
+      "execution_count": 15,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "Accuracy: 0.850\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "0w1ZGUEbhqID"
+      },
+      "source": [
+        "clf = clf.partial_fit(X_test, y_test)"
+      ],
+      "execution_count": 16,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "3Bhcx-O8SqoF"
+      },
+      "source": [
+        "## Testing and making Predictions"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "587-vJS3Svp1",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "52995b11-ba74-467e-ec16-8d5799315003"
+      },
+      "source": [
+        "label = {0:'neutral', 1:'at-risk'}\n",
+        "example = [\"I'll kill myself am tired of living depressed and alone\"]\n",
+        "X = vect.transform(example)\n",
+        "print('Prediction: %s\\nProbability: %.2f%%'\n",
+        "      %(label[clf.predict(X)[0]],np.max(clf.predict_proba(X))*100))"
+      ],
+      "execution_count": 17,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "Prediction: at-risk\n",
+            "Probability: 99.82%\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "7MsQYu9hiKzE",
+        "outputId": "8907a1f8-847c-40b8-bdb4-f7910d4a656a"
+      },
+      "source": [
+        "label = {0:'neutral', 1:'at-risk'}\r\n",
+        "example = [\"It's such a hot day, I'd like to have ice cream and visit the park\"]\r\n",
+        "X = vect.transform(example)\r\n",
+        "print('Prediction: %s\\nProbability: %.2f%%'\r\n",
+        "      %(label[clf.predict(X)[0]],np.max(clf.predict_proba(X))*100))"
+      ],
+      "execution_count": 18,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "Prediction: neutral\n",
+            "Probability: 87.48%\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    }
+  ]
+}
